@@ -90,3 +90,42 @@ def test_training_script_with_restart_stories(tmpdir):
                          policy_config='data/test_config/max_hist_config.yml',
                          kwargs={})
     assert True
+
+def test_training_script_with_random_seed(tmpdir):
+    from rasa_core import training
+
+    # set kwargs reproducible and set random seed in config file , which will
+    # generate reproducible training result.
+    agent_1 = train_dialogue_model(
+        DEFAULT_DOMAIN_PATH, DEFAULT_STORIES_FILE,
+        tmpdir.strpath,
+        interpreter=RegexInterpreter(),
+        policy_config='data/test_config/random_seed.yaml',
+        kwargs={})
+
+    agent_2 = train_dialogue_model(
+        DEFAULT_DOMAIN_PATH, DEFAULT_STORIES_FILE,
+        tmpdir.strpath,
+        interpreter=RegexInterpreter(),
+        policy_config='data/test_config/random_seed.yaml',
+        kwargs={})
+
+    trackers_1 = training.load_data(
+        DEFAULT_STORIES_FILE,
+        agent_1.domain
+    )
+
+    trackers_2 = training.load_data(
+        DEFAULT_STORIES_FILE,
+        agent_2.domain
+    )
+
+    processor_1 = agent_1.create_processor()
+    processor_2 = agent_2.create_processor()
+
+    action_1, policy_1, probabilities_1 = \
+        processor_1.predict_next_action(trackers_1[0])
+    action_2, policy_2, probabilities_2 = \
+        processor_2.predict_next_action(trackers_2[0])
+    assert probabilities_1 == probabilities_2
+

@@ -1,0 +1,3 @@
+policies:
+- name: KerasPolicy
+  random_seed: 42
